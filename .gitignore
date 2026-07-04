@@ -1,0 +1,21 @@
+# Archivos y dependencias
+node_modules/
+dist/
+
+# Variables de Entorno (¡No subir a Git!)
+.env
+.env.*
+
+# Base de datos Prisma
+/generated/prisma
+
+# Archivos temporales generados por el servicio de PDF
+temp_*.docx
+temp_*.pdf
+
+# Python (Si usas entorno virtual local)
+__pycache__/
+*.pyc
+
+# Misceláneos
+.DS_Store
