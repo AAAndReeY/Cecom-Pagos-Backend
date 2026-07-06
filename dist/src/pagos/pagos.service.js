@@ -247,9 +247,13 @@ let PagosService = class PagosService {
         const tempPdf = path.join(process.cwd(), `temp_${timestamp}.pdf`);
         fs.writeFileSync(tempDocx, docxBuffer);
         try {
-            await execAsync(`python convert_pdf.py ${tempDocx} ${tempPdf}`);
+            await execAsync(`libreoffice --headless --convert-to pdf ${tempDocx} --outdir ${process.cwd()}`);
             const pdfBuffer = fs.readFileSync(tempPdf);
             return pdfBuffer;
+        }
+        catch (error) {
+            console.error('Error convirtiendo PDF con LibreOffice:', error);
+            throw new Error('No se pudo convertir el documento a PDF. ¿Está LibreOffice instalado en el servidor?');
         }
         finally {
             if (fs.existsSync(tempDocx))
