@@ -220,13 +220,13 @@ export class PagosService {
     fs.writeFileSync(tempDocx, docxBuffer);
     
     try {
-      // En servidores Linux, usamos LibreOffice en modo headless
-      await execAsync(`libreoffice --headless --convert-to pdf ${tempDocx} --outdir ${process.cwd()}`);
+      // En Windows Server, usamos Python y docx2pdf (requiere MS Word instalado)
+      await execAsync(`python convert_pdf.py ${tempDocx} ${tempPdf}`);
       const pdfBuffer = fs.readFileSync(tempPdf);
       return pdfBuffer;
     } catch (error) {
-      console.error('Error convirtiendo PDF con LibreOffice:', error);
-      throw new Error('No se pudo convertir el documento a PDF. ¿Está LibreOffice instalado en el servidor?');
+      console.error('Error convirtiendo PDF con Python:', error);
+      throw new Error('No se pudo convertir a PDF. ¿Está Python y MS Word instalado?');
     } finally {
       if (fs.existsSync(tempDocx)) fs.unlinkSync(tempDocx);
       if (fs.existsSync(tempPdf)) fs.unlinkSync(tempPdf);
