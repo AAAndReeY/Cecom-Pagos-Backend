@@ -47,6 +47,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PagosService = void 0;
 const common_1 = require("@nestjs/common");
+const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../prisma/prisma.service");
 const xlsx = __importStar(require("xlsx"));
 const fs = __importStar(require("fs"));
@@ -123,6 +124,67 @@ let PagosService = class PagosService {
         return this.prisma.persona.findMany({
             orderBy: { item: 'asc' },
         });
+    }
+    async createPersona(data) {
+        try {
+            const total = await this.prisma.persona.count();
+            return await this.prisma.persona.create({
+                data: {
+                    ...data,
+                    item: total + 1,
+                },
+            });
+        }
+        catch (error) {
+            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+                const targets = error.meta?.target;
+                const field = targets ? targets.join(', ') : 'DNI o RUC';
+                throw new common_1.ConflictException(`El registro con este ${field} ya existe.`);
+            }
+            throw error;
+        }
+    }
+    async togglePersonaStatus(dni, activo) {
+        return this.prisma.persona.update({
+            where: { dni },
+            data: { activo },
+        });
+    }
+    async updatePersona(dni, data) {
+        try {
+            return await this.prisma.persona.update({
+                where: { dni },
+                data,
+            });
+        }
+        catch (error) {
+            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+                const targets = error.meta?.target;
+                const field = targets ? targets.join(', ') : 'DNI o RUC';
+                throw new common_1.ConflictException(`El registro con este ${field} ya existe.`);
+            }
+            throw error;
+        }
+    }
+    async exportToExcel() {
+        const personas = await this.getAllPersonas();
+        const data = personas.map(p => ({
+            ITEM: p.item,
+            NOMBRE: p.nombre,
+            DNI: p.dni,
+            RUC: p.ruc || '',
+            DIRECCION: p.direccion || '',
+            BANCO: p.banco || '',
+            CCI: p.cci || '',
+            COLEGIO: p.colegio || '',
+            AÑO: p.anio || '',
+            FECHA_DJ: p.fecha_dj || '',
+            ESTADO: p.activo ? 'Habilitado' : 'Deshabilitado',
+        }));
+        const worksheet = xlsx.utils.json_to_sheet(data);
+        const workbook = xlsx.utils.book_new();
+        xlsx.utils.book_append_sheet(workbook, worksheet, 'Personas');
+        return xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
     }
     async generateDocuments(dnis) {
         const personas = await this.prisma.persona.findMany({

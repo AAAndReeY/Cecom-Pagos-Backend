@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import * as xlsx from 'xlsx';
 import * as fs from 'fs';
@@ -83,13 +84,23 @@ export class PagosService {
   }
 
   async createPersona(data: any) {
-    const total = await this.prisma.persona.count();
-    return this.prisma.persona.create({
-      data: {
-        ...data,
-        item: total + 1,
-      },
-    });
+    try {
+      const total = await this.prisma.persona.count();
+      return await this.prisma.persona.create({
+        data: {
+          ...data,
+          item: total + 1,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        // Prisma P2002 es error de unicidad
+        const targets = error.meta?.target as string[];
+        const field = targets ? targets.join(', ') : 'DNI o RUC';
+        throw new ConflictException(`El registro con este ${field} ya existe.`);
+      }
+      throw error;
+    }
   }
 
   async togglePersonaStatus(dni: string, activo: boolean) {
@@ -97,6 +108,22 @@ export class PagosService {
       where: { dni },
       data: { activo },
     });
+  }
+
+  async updatePersona(dni: string, data: any) {
+    try {
+      return await this.prisma.persona.update({
+        where: { dni },
+        data,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const targets = error.meta?.target as string[];
+        const field = targets ? targets.join(', ') : 'DNI o RUC';
+        throw new ConflictException(`El registro con este ${field} ya existe.`);
+      }
+      throw error;
+    }
   }
 
   async exportToExcel() {

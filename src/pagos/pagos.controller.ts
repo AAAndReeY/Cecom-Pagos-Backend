@@ -2,6 +2,8 @@ import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, Get, Body, 
 import { PagosService } from './pagos.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../auth/auth.guard';
+import { CreatePersonaDto } from './dto/create-persona.dto';
+import { UpdatePersonaDto } from './dto/update-persona.dto';
 import type { Response } from 'express';
 
 @UseGuards(AuthGuard)
@@ -25,13 +27,18 @@ export class PagosController {
   }
 
   @Post('persona')
-  async createPersona(@Body() data: any) {
+  async createPersona(@Body() data: CreatePersonaDto) {
     return this.pagosService.createPersona(data);
   }
 
   @Patch('persona/:dni/status')
   async toggleStatus(@Param('dni') dni: string, @Body('activo') activo: boolean) {
     return this.pagosService.togglePersonaStatus(dni, activo);
+  }
+
+  @Patch('persona/:dni')
+  async updatePersona(@Param('dni') dni: string, @Body() data: UpdatePersonaDto) {
+    return this.pagosService.updatePersona(dni, data);
   }
 
   @Get('exportar')

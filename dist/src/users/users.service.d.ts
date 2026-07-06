@@ -4,8 +4,8 @@ export declare class UsersService {
     constructor(prisma: PrismaService);
     findOne(username: string): Promise<{
         id: number;
+        createdAt: Date;
         username: string;
         password: string;
-        createdAt: Date;
     } | null>;
 }

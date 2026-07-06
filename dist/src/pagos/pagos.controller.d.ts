@@ -1,4 +1,6 @@
 import { PagosService } from './pagos.service';
+import { CreatePersonaDto } from './dto/create-persona.dto';
+import { UpdatePersonaDto } from './dto/update-persona.dto';
 import type { Response } from 'express';
 export declare class PagosController {
     private readonly pagosService;
@@ -12,19 +14,69 @@ export declare class PagosController {
     }>;
     getPersonas(): Promise<{
         id: number;
-        dni: string;
-        item: number;
         nombre: string;
-        ruc: string | null;
-        direccion: string | null;
-        banco: string | null;
-        cci: string | null;
-        colegio: string | null;
-        anio: string | null;
-        fecha_dj: string | null;
         createdAt: Date;
         updatedAt: Date;
+        activo: boolean;
+        banco: string;
+        dni: string;
+        ruc: string;
+        item: number;
+        direccion: string;
+        cci: string;
+        colegio: string;
+        anio: string;
+        fecha_dj: string;
     }[]>;
+    createPersona(data: CreatePersonaDto): Promise<{
+        id: number;
+        nombre: string;
+        createdAt: Date;
+        updatedAt: Date;
+        activo: boolean;
+        banco: string;
+        dni: string;
+        ruc: string;
+        item: number;
+        direccion: string;
+        cci: string;
+        colegio: string;
+        anio: string;
+        fecha_dj: string;
+    }>;
+    toggleStatus(dni: string, activo: boolean): Promise<{
+        id: number;
+        nombre: string;
+        createdAt: Date;
+        updatedAt: Date;
+        activo: boolean;
+        banco: string;
+        dni: string;
+        ruc: string;
+        item: number;
+        direccion: string;
+        cci: string;
+        colegio: string;
+        anio: string;
+        fecha_dj: string;
+    }>;
+    updatePersona(dni: string, data: UpdatePersonaDto): Promise<{
+        id: number;
+        nombre: string;
+        createdAt: Date;
+        updatedAt: Date;
+        activo: boolean;
+        banco: string;
+        dni: string;
+        ruc: string;
+        item: number;
+        direccion: string;
+        cci: string;
+        colegio: string;
+        anio: string;
+        fecha_dj: string;
+    }>;
+    exportarExcel(res: Response): Promise<void>;
     generateDocs(body: {
         dnis: string[];
     }, res: Response): Promise<Response<any, Record<string, any>> | undefined>;

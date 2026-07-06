@@ -19,13 +19,21 @@ model Persona {
   item      Int
   nombre    String
   dni       String   @unique
-  ruc       String?
-  direccion String?
-  banco     String?
-  cci       String?
-  colegio   String?
-  anio      String?
-  fecha_dj  String?
+  ruc       String   @unique
+  direccion String
+  banco     String
+  cci       String
+  colegio   String
+  anio      String
+  fecha_dj  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  activo    Boolean  @default(true)
+}
+
+model Banco {
+  id        Int      @id @default(autoincrement())
+  nombre    String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   activo    Boolean  @default(true)

@@ -17,6 +17,8 @@ const common_1 = require("@nestjs/common");
 const pagos_service_1 = require("./pagos.service");
 const platform_express_1 = require("@nestjs/platform-express");
 const auth_guard_1 = require("../auth/auth.guard");
+const create_persona_dto_1 = require("./dto/create-persona.dto");
+const update_persona_dto_1 = require("./dto/update-persona.dto");
 let PagosController = class PagosController {
     pagosService;
     constructor(pagosService) {
@@ -31,6 +33,23 @@ let PagosController = class PagosController {
     }
     async getPersonas() {
         return this.pagosService.getAllPersonas();
+    }
+    async createPersona(data) {
+        return this.pagosService.createPersona(data);
+    }
+    async toggleStatus(dni, activo) {
+        return this.pagosService.togglePersonaStatus(dni, activo);
+    }
+    async updatePersona(dni, data) {
+        return this.pagosService.updatePersona(dni, data);
+    }
+    async exportarExcel(res) {
+        const buffer = await this.pagosService.exportToExcel();
+        res.set({
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition': 'attachment; filename="Personas.xlsx"',
+        });
+        res.send(buffer);
     }
     async generateDocs(body, res) {
         const { dnis } = body;
@@ -73,6 +92,36 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], PagosController.prototype, "getPersonas", null);
+__decorate([
+    (0, common_1.Post)('persona'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_persona_dto_1.CreatePersonaDto]),
+    __metadata("design:returntype", Promise)
+], PagosController.prototype, "createPersona", null);
+__decorate([
+    (0, common_1.Patch)('persona/:dni/status'),
+    __param(0, (0, common_1.Param)('dni')),
+    __param(1, (0, common_1.Body)('activo')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Boolean]),
+    __metadata("design:returntype", Promise)
+], PagosController.prototype, "toggleStatus", null);
+__decorate([
+    (0, common_1.Patch)('persona/:dni'),
+    __param(0, (0, common_1.Param)('dni')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_persona_dto_1.UpdatePersonaDto]),
+    __metadata("design:returntype", Promise)
+], PagosController.prototype, "updatePersona", null);
+__decorate([
+    (0, common_1.Get)('exportar'),
+    __param(0, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], PagosController.prototype, "exportarExcel", null);
 __decorate([
     (0, common_1.Post)('generar'),
     __param(0, (0, common_1.Body)()),
