@@ -18,7 +18,7 @@ export class BancosService {
         data,
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if ((error as any).code === 'P2002') {
         throw new ConflictException(`El banco con el nombre "${data.nombre}" ya existe.`);
       }
       throw error;
@@ -32,7 +32,7 @@ export class BancosService {
         data,
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if ((error as any).code === 'P2002') {
         throw new ConflictException(`El banco con el nombre "${data.nombre}" ya existe.`);
       }
       throw error;

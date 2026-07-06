@@ -93,7 +93,7 @@ export class PagosService {
         },
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if ((error as any).code === 'P2002') {
         // Prisma P2002 es error de unicidad
         const targets = error.meta?.target as string[];
         const field = targets ? targets.join(', ') : 'DNI o RUC';
@@ -117,7 +117,7 @@ export class PagosService {
         data,
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if ((error as any).code === 'P2002') {
         const targets = error.meta?.target as string[];
         const field = targets ? targets.join(', ') : 'DNI o RUC';
         throw new ConflictException(`El registro con este ${field} ya existe.`);
@@ -128,7 +128,7 @@ export class PagosService {
 
   async exportToExcel() {
     const personas = await this.getAllPersonas();
-    const data = personas.map(p => ({
+    const data = personas.map((p: any) => ({
       ITEM: p.item,
       NOMBRE: p.nombre,
       DNI: p.dni,
@@ -220,13 +220,15 @@ export class PagosService {
     fs.writeFileSync(tempDocx, docxBuffer);
     
     try {
-      // En Windows Server, usamos Python y docx2pdf (requiere MS Word instalado)
-      await execAsync(`python convert_pdf.py ${tempDocx} ${tempPdf}`);
+      // Como no hay MS Word en el servidor, usaremos LibreOffice para Windows
+      const libreOfficePath = '"C:\\Program Files\\LibreOffice\\program\\soffice.exe"';
+      await execAsync(`${libreOfficePath} --headless --convert-to pdf ${tempDocx} --outdir ${process.cwd()}`);
+      
       const pdfBuffer = fs.readFileSync(tempPdf);
       return pdfBuffer;
     } catch (error) {
-      console.error('Error convirtiendo PDF con Python:', error);
-      throw new Error('No se pudo convertir a PDF. ¿Está Python y MS Word instalado?');
+      console.error('Error convirtiendo PDF con LibreOffice:', error);
+      throw new Error('No se pudo convertir a PDF. ¿Instalaste LibreOffice en el servidor Windows?');
     } finally {
       if (fs.existsSync(tempDocx)) fs.unlinkSync(tempDocx);
       if (fs.existsSync(tempPdf)) fs.unlinkSync(tempPdf);
