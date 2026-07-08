@@ -23,6 +23,9 @@ export class PagosService {
     const data: any[] = xlsx.utils.sheet_to_json(sheet);
 
     const results = [];
+    const maxItemRow = await this.prisma.persona.aggregate({ _max: { item: true } });
+    let nextItem = (maxItemRow._max.item || 0) + 1;
+
     for (const row of data) {
       const getVal = (searchStr: string, strict: boolean = false) => {
         const keys = Object.keys(row);
@@ -46,10 +49,20 @@ export class PagosService {
 
       if (!dni) continue;
 
+      const personaExistente = await this.prisma.persona.findUnique({ where: { dni } });
+      let finalItem = item;
+      if (!finalItem) {
+        if (personaExistente && personaExistente.item > 0) {
+          finalItem = personaExistente.item;
+        } else {
+          finalItem = nextItem++;
+        }
+      }
+
       const persona = await this.prisma.persona.upsert({
         where: { dni },
         update: {
-          item: item || 0,
+          item: finalItem,
           nombre,
           ruc,
           direccion,
@@ -60,7 +73,7 @@ export class PagosService {
           fecha_dj,
         },
         create: {
-          item: item || 0,
+          item: finalItem,
           nombre,
           dni,
           ruc,
