@@ -39,17 +39,28 @@ export class PagosService {
       const item = row['ITEM'];
       const nombre = row['NOMBRE'];
       const dni = getVal('DNI')?.toString();
-      const ruc = getVal('RUC')?.toString();
+      const ruc = getVal('RUC')?.toString().trim();
       const direccion = getVal('DIRECCI') || getVal('DOMICILIO');
       const banco = getVal('BANCO');
-      const cci = getVal('CCI', true) || getVal('NCCI', true);
+      const cci = (getVal('CCI', true) || getVal('NCCI', true))?.toString().trim();
       const colegio = getVal('COLEGIO');
       const anio = getVal('AO') || getVal('ANIO') || getVal('AÑO');
       const fecha_dj = getVal('FECHA');
 
       if (!dni) continue;
+      const dniClean = dni.trim();
 
-      const personaExistente = await this.prisma.persona.findUnique({ where: { dni } });
+      if (!/^\d{8}$/.test(dniClean)) {
+        throw new BadRequestException(`Fila con Nombre "${nombre}" rechazada: El DNI debe tener exactamente 8 números (encontrado: ${dniClean}).`);
+      }
+      if (ruc && ruc !== '' && !/^\d{11}$/.test(ruc)) {
+        throw new BadRequestException(`Fila con Nombre "${nombre}" rechazada: El RUC debe tener exactamente 11 números (encontrado: ${ruc}).`);
+      }
+      if (cci && cci !== '' && !/^\d{20}$/.test(cci)) {
+        throw new BadRequestException(`Fila con Nombre "${nombre}" rechazada: El CCI debe tener exactamente 20 números (encontrado: ${cci}).`);
+      }
+
+      const personaExistente = await this.prisma.persona.findUnique({ where: { dni: dniClean } });
       let finalItem = item;
       if (!finalItem) {
         if (personaExistente && personaExistente.item > 0) {
@@ -60,14 +71,14 @@ export class PagosService {
       }
 
       const persona = await this.prisma.persona.upsert({
-        where: { dni },
+        where: { dni: dniClean },
         update: {
           item: finalItem,
           nombre,
           ruc,
           direccion,
           banco,
-          cci: cci?.toString(),
+          cci,
           colegio,
           anio: anio?.toString(),
           fecha_dj,
@@ -75,11 +86,11 @@ export class PagosService {
         create: {
           item: finalItem,
           nombre,
-          dni,
+          dni: dniClean,
           ruc,
           direccion,
           banco,
-          cci: cci?.toString(),
+          cci,
           colegio,
           anio: anio?.toString(),
           fecha_dj,
@@ -96,8 +107,15 @@ export class PagosService {
     });
   }
 
+  private validateLengths(data: any) {
+    if (data.dni && !/^\d{8}$/.test(data.dni.trim())) throw new BadRequestException('El DNI debe tener exactamente 8 números.');
+    if (data.ruc && data.ruc.trim() !== '' && !/^\d{11}$/.test(data.ruc.trim())) throw new BadRequestException('El RUC debe tener exactamente 11 números.');
+    if (data.cci && data.cci.trim() !== '' && !/^\d{20}$/.test(data.cci.trim())) throw new BadRequestException('El CCI debe tener exactamente 20 números.');
+  }
+
   async createPersona(data: any) {
     try {
+      this.validateLengths(data);
       const total = await this.prisma.persona.count();
       return await this.prisma.persona.create({
         data: {
@@ -125,6 +143,7 @@ export class PagosService {
 
   async updatePersona(dni: string, data: any) {
     try {
+      this.validateLengths(data);
       return await this.prisma.persona.update({
         where: { dni },
         data,
