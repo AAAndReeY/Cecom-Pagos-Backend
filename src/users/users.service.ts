@@ -10,4 +10,33 @@ export class UsersService {
       where: { username },
     });
   }
+
+  async findAll() {
+    return this.prisma.user.findMany({
+      select: { id: true, username: true, rol: true, activo: true, createdAt: true },
+      orderBy: { id: 'asc' },
+    });
+  }
+
+  async create(data: any) {
+    // Verificar si existe
+    const exists = await this.prisma.user.findUnique({ where: { username: data.username } });
+    if (exists) {
+      throw new Error('El nombre de usuario ya está en uso');
+    }
+    return this.prisma.user.create({
+      data: {
+        username: data.username,
+        password: data.password, // Nota: en producción esto debería hashearse con bcrypt
+        rol: data.rol || 'USER',
+      },
+    });
+  }
+
+  async toggleStatus(id: number, activo: boolean) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { activo },
+    });
+  }
 }

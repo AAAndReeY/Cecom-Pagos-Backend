@@ -25,9 +25,14 @@ let AuthService = class AuthService {
         if (user?.password !== pass) {
             throw new common_1.UnauthorizedException('Credenciales incorrectas');
         }
-        const payload = { sub: user.id, username: user.username };
+        if (!user.activo) {
+            throw new common_1.UnauthorizedException('Su cuenta ha sido deshabilitada');
+        }
+        const payload = { sub: user.id, username: user.username, rol: user.rol };
         return {
             access_token: await this.jwtService.signAsync(payload),
+            rol: user.rol,
+            username: user.username
         };
     }
 };

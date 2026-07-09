@@ -18,9 +18,15 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales incorrectas');
     }
     
-    const payload = { sub: user.id, username: user.username };
+    if (!user.activo) {
+      throw new UnauthorizedException('Su cuenta ha sido deshabilitada');
+    }
+    
+    const payload = { sub: user.id, username: user.username, rol: user.rol };
     return {
       access_token: await this.jwtService.signAsync(payload),
+      rol: user.rol,
+      username: user.username
     };
   }
 }

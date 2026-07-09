@@ -47,7 +47,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PagosService = void 0;
 const common_1 = require("@nestjs/common");
-const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../prisma/prisma.service");
 const xlsx = __importStar(require("xlsx"));
 const fs = __importStar(require("fs"));
@@ -69,6 +68,8 @@ let PagosService = class PagosService {
         const sheet = workbook.Sheets[sheetName];
         const data = xlsx.utils.sheet_to_json(sheet);
         const results = [];
+        const maxItemRow = await this.prisma.persona.aggregate({ _max: { item: true } });
+        let nextItem = (maxItemRow._max.item || 0) + 1;
         for (const row of data) {
             const getVal = (searchStr, strict = false) => {
                 const keys = Object.keys(row);
@@ -81,36 +82,56 @@ let PagosService = class PagosService {
             const item = row['ITEM'];
             const nombre = row['NOMBRE'];
             const dni = getVal('DNI')?.toString();
-            const ruc = getVal('RUC')?.toString();
+            const ruc = getVal('RUC')?.toString().trim();
             const direccion = getVal('DIRECCI') || getVal('DOMICILIO');
             const banco = getVal('BANCO');
-            const cci = getVal('CCI', true) || getVal('NCCI', true);
+            const cci = (getVal('CCI', true) || getVal('NCCI', true))?.toString().trim();
             const colegio = getVal('COLEGIO');
             const anio = getVal('AO') || getVal('ANIO') || getVal('AÑO');
             const fecha_dj = getVal('FECHA');
             if (!dni)
                 continue;
+            const dniClean = dni.trim();
+            if (!/^\d{8}$/.test(dniClean)) {
+                throw new common_1.BadRequestException(`Fila con Nombre "${nombre}" rechazada: El DNI debe tener exactamente 8 números (encontrado: ${dniClean}).`);
+            }
+            if (ruc && ruc !== '' && !/^\d{11}$/.test(ruc)) {
+                throw new common_1.BadRequestException(`Fila con Nombre "${nombre}" rechazada: El RUC debe tener exactamente 11 números (encontrado: ${ruc}).`);
+            }
+            if (cci && cci !== '' && !/^\d{20}$/.test(cci)) {
+                throw new common_1.BadRequestException(`Fila con Nombre "${nombre}" rechazada: El CCI debe tener exactamente 20 números (encontrado: ${cci}).`);
+            }
+            const personaExistente = await this.prisma.persona.findUnique({ where: { dni: dniClean } });
+            let finalItem = item;
+            if (!finalItem) {
+                if (personaExistente && personaExistente.item > 0) {
+                    finalItem = personaExistente.item;
+                }
+                else {
+                    finalItem = nextItem++;
+                }
+            }
             const persona = await this.prisma.persona.upsert({
-                where: { dni },
+                where: { dni: dniClean },
                 update: {
-                    item: item || 0,
+                    item: finalItem,
                     nombre,
                     ruc,
                     direccion,
                     banco,
-                    cci: cci?.toString(),
+                    cci,
                     colegio,
                     anio: anio?.toString(),
                     fecha_dj,
                 },
                 create: {
-                    item: item || 0,
+                    item: finalItem,
                     nombre,
-                    dni,
+                    dni: dniClean,
                     ruc,
                     direccion,
                     banco,
-                    cci: cci?.toString(),
+                    cci,
                     colegio,
                     anio: anio?.toString(),
                     fecha_dj,
@@ -125,8 +146,17 @@ let PagosService = class PagosService {
             orderBy: { item: 'asc' },
         });
     }
+    validateLengths(data) {
+        if (data.dni && !/^\d{8}$/.test(data.dni.trim()))
+            throw new common_1.BadRequestException('El DNI debe tener exactamente 8 números.');
+        if (data.ruc && data.ruc.trim() !== '' && !/^\d{11}$/.test(data.ruc.trim()))
+            throw new common_1.BadRequestException('El RUC debe tener exactamente 11 números.');
+        if (data.cci && data.cci.trim() !== '' && !/^\d{20}$/.test(data.cci.trim()))
+            throw new common_1.BadRequestException('El CCI debe tener exactamente 20 números.');
+    }
     async createPersona(data) {
         try {
+            this.validateLengths(data);
             const total = await this.prisma.persona.count();
             return await this.prisma.persona.create({
                 data: {
@@ -136,7 +166,7 @@ let PagosService = class PagosService {
             });
         }
         catch (error) {
-            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+            if (error.code === 'P2002') {
                 const targets = error.meta?.target;
                 const field = targets ? targets.join(', ') : 'DNI o RUC';
                 throw new common_1.ConflictException(`El registro con este ${field} ya existe.`);
@@ -152,13 +182,14 @@ let PagosService = class PagosService {
     }
     async updatePersona(dni, data) {
         try {
+            this.validateLengths(data);
             return await this.prisma.persona.update({
                 where: { dni },
                 data,
             });
         }
         catch (error) {
-            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+            if (error.code === 'P2002') {
                 const targets = error.meta?.target;
                 const field = targets ? targets.join(', ') : 'DNI o RUC';
                 throw new common_1.ConflictException(`El registro con este ${field} ya existe.`);
@@ -168,7 +199,7 @@ let PagosService = class PagosService {
     }
     async exportToExcel() {
         const personas = await this.getAllPersonas();
-        const data = personas.map(p => ({
+        const data = personas.map((p) => ({
             ITEM: p.item,
             NOMBRE: p.nombre,
             DNI: p.dni,
@@ -247,13 +278,14 @@ let PagosService = class PagosService {
         const tempPdf = path.join(process.cwd(), `temp_${timestamp}.pdf`);
         fs.writeFileSync(tempDocx, docxBuffer);
         try {
-            await execAsync(`libreoffice --headless --convert-to pdf ${tempDocx} --outdir ${process.cwd()}`);
+            const libreOfficePath = '"C:\\Program Files\\LibreOffice\\program\\soffice.exe"';
+            await execAsync(`${libreOfficePath} --headless --convert-to pdf ${tempDocx} --outdir ${process.cwd()}`);
             const pdfBuffer = fs.readFileSync(tempPdf);
             return pdfBuffer;
         }
         catch (error) {
             console.error('Error convirtiendo PDF con LibreOffice:', error);
-            throw new Error('No se pudo convertir el documento a PDF. ¿Está LibreOffice instalado en el servidor?');
+            throw new Error('No se pudo convertir a PDF. ¿Instalaste LibreOffice en el servidor Windows?');
         }
         finally {
             if (fs.existsSync(tempDocx))

@@ -22,6 +22,31 @@ let UsersService = class UsersService {
             where: { username },
         });
     }
+    async findAll() {
+        return this.prisma.user.findMany({
+            select: { id: true, username: true, rol: true, activo: true, createdAt: true },
+            orderBy: { id: 'asc' },
+        });
+    }
+    async create(data) {
+        const exists = await this.prisma.user.findUnique({ where: { username: data.username } });
+        if (exists) {
+            throw new Error('El nombre de usuario ya está en uso');
+        }
+        return this.prisma.user.create({
+            data: {
+                username: data.username,
+                password: data.password,
+                rol: data.rol || 'USER',
+            },
+        });
+    }
+    async toggleStatus(id, activo) {
+        return this.prisma.user.update({
+            where: { id },
+            data: { activo },
+        });
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([
