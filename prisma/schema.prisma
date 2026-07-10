@@ -30,7 +30,6 @@ model Persona {
   cci       String
   colegio   String
   anio      String
-  fecha_dj  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   activo    Boolean  @default(true)

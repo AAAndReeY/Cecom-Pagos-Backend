@@ -45,7 +45,6 @@ export class PagosService {
       const cci = (getVal('CCI', true) || getVal('NCCI', true))?.toString().trim();
       const colegio = getVal('COLEGIO');
       const anio = getVal('AO') || getVal('ANIO') || getVal('AÑO');
-      const fecha_dj = getVal('FECHA');
 
       if (!dni) continue;
       const dniClean = dni.trim();
@@ -81,7 +80,6 @@ export class PagosService {
           cci,
           colegio,
           anio: anio?.toString(),
-          fecha_dj,
         },
         create: {
           item: finalItem,
@@ -93,7 +91,6 @@ export class PagosService {
           cci,
           colegio,
           anio: anio?.toString(),
-          fecha_dj,
         },
       });
       results.push(persona);
@@ -178,7 +175,6 @@ export class PagosService {
       CCI: p.cci || '',
       COLEGIO: p.colegio || '',
       AÑO: p.anio || '',
-      FECHA_DJ: p.fecha_dj || '',
       ESTADO: p.activo ? 'Habilitado' : 'Deshabilitado',
     }));
 
@@ -231,6 +227,12 @@ export class PagosService {
       cciObj[`c${i}`] = cciStr[i] || '';
     }
 
+    const meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+    const now = new Date();
+    const currentMonth = meses[now.getMonth()];
+    const currentYear = now.getFullYear();
+    const fechaDynamic = `San Juan de Lurigancho, ${currentMonth} ${currentYear}`;
+
     doc.render({
       NOMBRE: persona.nombre || '',
       DNI: persona.dni || '',
@@ -241,7 +243,7 @@ export class PagosService {
       ...cciObj,
       COLEGIO: persona.colegio || '',
       ANIO: persona.anio || '',
-      FECHA_DJ: persona.fecha_dj || '',
+      FECHA_DJ: fechaDynamic,
     });
 
     const buf = doc.getZip().generate({
