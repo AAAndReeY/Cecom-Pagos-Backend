@@ -36,4 +36,15 @@ export class UsersController {
     await this.usersService.toggleStatus(Number(id), activo);
     return { message: 'Estado actualizado' };
   }
+
+  @Patch(':id')
+  async update(@Request() req: any, @Param('id') id: string, @Body() data: any) {
+    this.checkAdmin(req);
+    try {
+      await this.usersService.update(Number(id), data);
+      return { message: 'Usuario actualizado exitosamente' };
+    } catch (error: any) {
+      throw new UnauthorizedException(error.message);
+    }
+  }
 }

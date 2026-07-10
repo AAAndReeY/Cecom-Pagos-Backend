@@ -45,4 +45,32 @@ export class UsersService {
       data: { activo },
     });
   }
+
+  async update(id: number, data: any) {
+    const updateData: any = {
+      username: data.username,
+      rol: data.rol,
+      dni: data.dni,
+      nombre: data.nombre,
+      apellido: data.apellido,
+    };
+
+    if (data.password && data.password.trim() !== '') {
+      if (!/(?=.*[!@#$%^&*]).{4,}/.test(data.password)) {
+        throw new Error('La contraseña debe tener al menos 4 caracteres y un carácter especial (!@#$%^&*)');
+      }
+      updateData.password = data.password;
+    }
+
+    // Verificar unicidad de username
+    const exists = await this.prisma.user.findUnique({ where: { username: data.username } });
+    if (exists && exists.id !== id) {
+      throw new Error('El nombre de usuario ya está en uso por otra persona');
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: updateData,
+    });
+  }
 }
