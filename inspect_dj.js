@@ -1,0 +1,31 @@
+const fs = require('fs');
+const PizZip = require('pizzip');
+
+const backupPath = 'C:\\\\Users\\\\Soporte\\\\.gemini\\\\antigravity\\\\brain\\\\7c62bc48-12e7-4e84-93d3-799e43b64d4d\\\\scratch\\\\plantilla.zip';
+const content = fs.readFileSync(backupPath, 'binary');
+const zip = new PizZip(content);
+const xml = zip.file('word/document.xml').asText();
+
+const startIdx = xml.indexOf('{NOMBRE}');
+const endIdx = xml.indexOf('Art. 51.1');
+
+if (startIdx !== -1 && endIdx !== -1) {
+    const chunk = xml.substring(startIdx, endIdx);
+    // Find all <w:p> ... </w:p>
+    const matches = [...chunk.matchAll(/<w:p\b[^>]*>.*?<\/w:p>/g)];
+    console.log(`Total paragraphs in this section: ${matches.length}`);
+    
+    let emptyCount = 0;
+    matches.forEach((m, i) => {
+        const p = m[0];
+        const hasText = p.includes('<w:t>') || p.includes('<w:t ');
+        const hasDrawing = p.includes('<w:drawing') || p.includes('<v:') || p.includes('<w:pict');
+        if (!hasText && !hasDrawing) {
+            console.log(`[EMPTY PARA ${emptyCount}]: ${p.substring(0, 80)}...`);
+            emptyCount++;
+        }
+    });
+    console.log(`Total empty paragraphs: ${emptyCount}`);
+} else {
+    console.log("Could not find section.");
+}

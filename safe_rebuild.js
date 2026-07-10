@@ -19,11 +19,42 @@ try {
     docXml = replaceInXml(docXml, 'JUNIO', '{MES_ACTUAL}');
     docXml = replaceInXml(docXml, '2026', '{ANIO_ACTUAL}');
 
-    const emptyPara0 = '<w:p w14:paraId="7EF97398" w14:textId="77777777" w:rsidR="00FB0279" w:rsidRPr="00B10519" w:rsidRDefault="00FB0279" w:rsidP="00FB0279"><w:pPr><w:adjustRightInd w:val="0"/><w:ind w:right="1368" w:hanging="426"/><w:jc w:val="center"/><w:rPr><w:rFonts w:ascii="Arial" w:eastAsia="Times New Roman" w:hAnsi="Arial" w:cs="Arial"/><w:b/><w:bCs/><w:color w:val="000000"/><w:sz w:val="20"/><w:szCs w:val="20"/><w:lang w:eastAsia="es-PE"/></w:rPr></w:pPr></w:p>';
-    const emptyPara1 = '<w:p w14:paraId="42D492EB" w14:textId="77777777" w:rsidR="00FB0279" w:rsidRPr="00B10519" w:rsidRDefault="00FB0279" w:rsidP="00FB0279"><w:pPr><w:adjustRightInd w:val="0"/><w:ind w:right="1368" w:hanging="426"/><w:jc w:val="center"/><w:rPr><w:rFonts w:ascii="Arial" w:eastAsia="Times New Roman" w:hAnsi="Arial" w:cs="Arial"/><w:b/><w:bCs/><w:color w:val="000000"/><w:sz w:val="20"/><w:szCs w:val="20"/><w:lang w:eastAsia="es-PE"/></w:rPr></w:pPr></w:p>';
-
-    docXml = docXml.replace(emptyPara0, '');
-    docXml = docXml.replace(emptyPara1, '');
+    // Now remove exactly 4 empty paragraphs that are right before Art 51.1
+    const endIdx = docXml.indexOf('Art. 51.1');
+    if (endIdx !== -1) {
+        const before = docXml.substring(0, endIdx);
+        const after = docXml.substring(endIdx);
+        
+        let removedCount = 0;
+        
+        // Find empty paragraphs from the end backwards
+        const regex = /<w:p\b[^>]*>(?:(?!<w:p\b[^>]*>).)*?<\/w:p>/g;
+        const matches = [...before.matchAll(regex)];
+        
+        let newBefore = before;
+        
+        // Iterate backwards
+        for (let i = matches.length - 1; i >= 0; i--) {
+            if (removedCount >= 4) break;
+            
+            const p = matches[i][0];
+            const hasText = p.includes('<w:t>') || p.includes('<w:t ');
+            const hasDrawing = p.includes('<w:drawing') || p.includes('<v:') || p.includes('<w:pict');
+            
+            if (!hasText && !hasDrawing) {
+                // Delete this exact paragraph from newBefore
+                const lastIndex = newBefore.lastIndexOf(p);
+                if (lastIndex !== -1) {
+                    newBefore = newBefore.substring(0, lastIndex) + newBefore.substring(lastIndex + p.length);
+                    removedCount++;
+                    console.log('Removed an empty paragraph for spacing buffer.');
+                }
+            }
+        }
+        
+        docXml = newBefore + after;
+        console.log(`Successfully removed ${removedCount} empty lines to create a buffer.`);
+    }
 
     zip.file('word/document.xml', docXml);
 
