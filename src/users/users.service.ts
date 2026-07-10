@@ -19,6 +19,9 @@ export class UsersService {
   }
 
   async create(data: any) {
+    if (!/(?=.*[!@#$%^&*]).{4,}/.test(data.password)) {
+      throw new Error('La contraseña debe tener al menos 4 caracteres y un carácter especial (!@#$%^&*)');
+    }
     // Verificar si existe
     const exists = await this.prisma.user.findUnique({ where: { username: data.username } });
     if (exists) {
