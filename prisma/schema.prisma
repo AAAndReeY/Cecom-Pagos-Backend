@@ -13,6 +13,9 @@ model User {
   password  String
   rol       String   @default("USER")
   activo    Boolean  @default(true)
+  dni       String   @default("")
+  nombre    String   @default("")
+  apellido  String   @default("")
   createdAt DateTime @default(now())
 }
 
@@ -31,6 +34,7 @@ model Persona {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   activo    Boolean  @default(true)
+  eliminado Boolean  @default(false)
 }
 
 model Banco {

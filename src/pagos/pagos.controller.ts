@@ -1,4 +1,4 @@
-import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, Get, Body, Res, Patch, Param } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, Get, Body, Res, Patch, Param, Delete } from '@nestjs/common';
 import { PagosService } from './pagos.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../auth/auth.guard';
@@ -39,6 +39,11 @@ export class PagosController {
   @Patch('persona/:dni')
   async updatePersona(@Param('dni') dni: string, @Body() data: UpdatePersonaDto) {
     return this.pagosService.updatePersona(dni, data);
+  }
+
+  @Delete('persona/:dni')
+  async deletePersona(@Param('dni') dni: string) {
+    return this.pagosService.deletePersona(dni);
   }
 
   @Get('exportar')

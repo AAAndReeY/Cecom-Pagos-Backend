@@ -103,7 +103,15 @@ export class PagosService {
 
   async getAllPersonas() {
     return this.prisma.persona.findMany({
+      where: { eliminado: false },
       orderBy: { item: 'asc' },
+    });
+  }
+
+  async deletePersona(dni: string) {
+    return this.prisma.persona.update({
+      where: { dni },
+      data: { eliminado: true },
     });
   }
 

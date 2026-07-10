@@ -13,7 +13,7 @@ export class UsersService {
 
   async findAll() {
     return this.prisma.user.findMany({
-      select: { id: true, username: true, rol: true, activo: true, createdAt: true },
+      select: { id: true, username: true, rol: true, activo: true, createdAt: true, dni: true, nombre: true, apellido: true },
       orderBy: { id: 'asc' },
     });
   }
@@ -29,6 +29,9 @@ export class UsersService {
         username: data.username,
         password: data.password, // Nota: en producción esto debería hashearse con bcrypt
         rol: data.rol || 'USER',
+        dni: data.dni || '',
+        nombre: data.nombre || '',
+        apellido: data.apellido || '',
       },
     });
   }
