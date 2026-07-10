@@ -243,8 +243,8 @@ export class PagosService {
       ...cciObj,
       COLEGIO: persona.colegio || '',
       ANIO: persona.anio || '',
-      FECHA_DJ: fechaDynamic,
-      MES_ANIO: `${currentMonth} ${currentYear}`,
+      MES_ACTUAL: currentMonth,
+      ANIO_ACTUAL: currentYear.toString(),
     });
 
     const buf = doc.getZip().generate({
