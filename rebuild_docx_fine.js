@@ -20,8 +20,11 @@ try {
     docXml = replaceInXml(docXml, '2026', '{ANIO_ACTUAL}');
 
     // Fix pagination by pulling the text up (removing an empty line)
-    const emptyLine = '<w:p w14:paraId="1FE5D2DF" w14:textId="77777777" w:rsidR="002552C1" w:rsidRDefault="002552C1" w:rsidP="00FB0279"><w:pPr><w:ind w:right="1084"/><w:jc w:val="both"/><w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/><w:sz w:val="16"/></w:rPr></w:pPr></w:p>';
-    docXml = docXml.replace(emptyLine, '');
+    const emptyLine1 = '<w:p w14:paraId="1FE5D2DF" w14:textId="77777777" w:rsidR="002552C1" w:rsidRDefault="002552C1" w:rsidP="00FB0279"><w:pPr><w:ind w:right="1084"/><w:jc w:val="both"/><w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/><w:sz w:val="16"/></w:rPr></w:pPr></w:p>';
+    docXml = docXml.replace(emptyLine1, '');
+
+    const emptyLine2 = '<w:p w14:paraId="6A19651D" w14:textId="4B7B3EC6" w:rsidR="000F0674" w:rsidRDefault="000F0674"><w:pPr><w:pStyle w:val="Textoindependiente"/><w:spacing w:before="1"/><w:rPr><w:rFonts w:ascii="Calibri"/><w:b/></w:rPr></w:pPr></w:p>';
+    docXml = docXml.replace(emptyLine2, '');
 
     zip.file('word/document.xml', docXml);
 
