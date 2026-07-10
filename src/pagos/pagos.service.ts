@@ -244,6 +244,7 @@ export class PagosService {
       COLEGIO: persona.colegio || '',
       ANIO: persona.anio || '',
       FECHA_DJ: fechaDynamic,
+      MES_ANIO: `${currentMonth} ${currentYear}`,
     });
 
     const buf = doc.getZip().generate({
