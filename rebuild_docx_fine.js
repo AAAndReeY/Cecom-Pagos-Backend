@@ -19,6 +19,9 @@ try {
     docXml = replaceInXml(docXml, 'JUNIO', '{MES_ACTUAL}');
     docXml = replaceInXml(docXml, '2026', '{ANIO_ACTUAL}');
 
+    // Fix pagination between page 4 and 5 by replacing an empty line with a hard page break
+    docXml = docXml.replace('<w:p w14:paraId="5E4833C5" w14:textId="77777777" w:rsidR="00FB0279" w:rsidRDefault="00FB0279"><w:pPr><w:pStyle w:val="Ttulo1"/><w:ind w:left="2659"/><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:u w:val="thick"/></w:rPr></w:pPr></w:p>', '<w:p><w:r><w:br w:type="page"/></w:r></w:p>');
+
     zip.file('word/document.xml', docXml);
 
     const outBuf = zip.generate({
