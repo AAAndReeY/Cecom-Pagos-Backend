@@ -37,31 +37,29 @@ export class PagosService {
       };
 
       const item = row['ITEM'];
-      const nombre = getVal('NOMBRE');
+      const nombre = getVal('NOMBRE') || 'SIN REGISTRO';
       const dni = getVal('DNI')?.toString();
-      const ruc = getVal('RUC')?.toString().trim();
-      const direccion = getVal('DIRECCI') || getVal('DOMICILIO');
-      const banco = getVal('BANCO');
-      const cci = (getVal('CCI', true) || getVal('NCCI', true))?.toString().trim();
-      const colegio = getVal('COLEGIO');
-      const anio = getVal('AO') || getVal('ANIO') || getVal('AÑO');
+      const ruc = getVal('RUC')?.toString().trim() || 'SIN REGISTRO';
+      const direccion = getVal('DIRECCI') || getVal('DOMICILIO') || 'SIN REGISTRO';
+      const banco = getVal('BANCO') || 'SIN REGISTRO';
+      const cci = (getVal('CCI', true) || getVal('NCCI', true))?.toString().trim() || 'SIN REGISTRO';
+      const colegio = getVal('COLEGIO') || 'SIN REGISTRO';
+      const anio = getVal('AO') || getVal('ANIO') || getVal('AÑO') || 'SIN REGISTRO';
 
       if (!dni) continue;
-      
-      if (!nombre) {
-        throw new BadRequestException(`Fila rechazada: No se encontró el nombre para el DNI ${dni}. Asegúrese de que la columna se llame 'NOMBRE' o similar.`);
-      }
       
       const dniClean = dni.trim();
 
       if (!/^\d{8}$/.test(dniClean)) {
-        throw new BadRequestException(`Fila con Nombre "${nombre}" rechazada: El DNI debe tener exactamente 8 números (encontrado: ${dniClean}).`);
+        throw new BadRequestException(`ERROR EN EL EXCEL: En la fila del trabajador "${nombre}", la celda del DNI tiene un formato incorrecto. Debe tener exactamente 8 números (actualmente tiene: "${dniClean}"). Corrija el Excel y vuelva a intentarlo.`);
       }
-      if (ruc && ruc !== '' && !/^\d{11}$/.test(ruc)) {
-        throw new BadRequestException(`Fila con Nombre "${nombre}" rechazada: El RUC debe tener exactamente 11 números (encontrado: ${ruc}).`);
+      
+      if (ruc.toUpperCase() !== 'SIN REGISTRO' && !/^\d{11}$/.test(ruc)) {
+        throw new BadRequestException(`ERROR EN EL EXCEL: En la fila del DNI ${dniClean}, la celda del RUC tiene un formato incorrecto. Debe tener exactamente 11 números o dejarla vacía (actualmente tiene: "${ruc}"). Corrija el Excel y vuelva a intentarlo.`);
       }
-      if (cci && cci !== '' && cci.toUpperCase() !== 'SIN REGISTRO' && !/^\d{20}$/.test(cci)) {
-        throw new BadRequestException(`Fila con Nombre "${nombre}" rechazada: El CCI debe tener exactamente 20 números o decir 'SIN REGISTRO' (encontrado: ${cci}).`);
+      
+      if (cci.toUpperCase() !== 'SIN REGISTRO' && !/^\d{20}$/.test(cci)) {
+        throw new BadRequestException(`ERROR EN EL EXCEL: En la fila del DNI ${dniClean}, la celda del CCI tiene un formato incorrecto. Debe tener exactamente 20 números o dejarla vacía (actualmente tiene: "${cci}"). Corrija el Excel y vuelva a intentarlo.`);
       }
 
       const personaExistente = await this.prisma.persona.findUnique({ where: { dni: dniClean } });
