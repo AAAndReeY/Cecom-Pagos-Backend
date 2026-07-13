@@ -59,7 +59,7 @@ export class PagosService {
         throw new BadRequestException(`ERROR EN EL EXCEL: En la fila del trabajador "${nombre}", la celda del DNI tiene un formato incorrecto. Debe tener exactamente 8 números o dejarla vacía (actualmente tiene: "${dniClean}"). Corrija el Excel y vuelva a intentarlo.`);
       }
       
-      if (!finalRuc.startsWith('SIN REGISTRO') && !/^\d{11}$/.test(finalRuc)) {
+      if (!ruc.startsWith('SIN REGISTRO') && !/^\d{11}$/.test(ruc)) {
         throw new BadRequestException(`ERROR EN EL EXCEL: En la fila del DNI ${dniClean}, la celda del RUC tiene un formato incorrecto. Debe tener exactamente 11 números o dejarla vacía (actualmente tiene: "${ruc}"). Corrija el Excel y vuelva a intentarlo.`);
       }
       
