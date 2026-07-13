@@ -37,7 +37,7 @@ export class PagosService {
       };
 
       const item = row['ITEM'];
-      const nombre = row['NOMBRE'];
+      const nombre = getVal('NOMBRE');
       const dni = getVal('DNI')?.toString();
       const ruc = getVal('RUC')?.toString().trim();
       const direccion = getVal('DIRECCI') || getVal('DOMICILIO');
@@ -47,6 +47,11 @@ export class PagosService {
       const anio = getVal('AO') || getVal('ANIO') || getVal('AÑO');
 
       if (!dni) continue;
+      
+      if (!nombre) {
+        throw new BadRequestException(`Fila rechazada: No se encontró el nombre para el DNI ${dni}. Asegúrese de que la columna se llame 'NOMBRE' o similar.`);
+      }
+      
       const dniClean = dni.trim();
 
       if (!/^\d{8}$/.test(dniClean)) {
