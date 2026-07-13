@@ -9,14 +9,14 @@ export declare class PagosService {
         updatedAt: Date;
         activo: boolean;
         banco: string;
-        item: number;
         dni: string;
+        item: number;
         ruc: string;
         direccion: string;
         cci: string;
         colegio: string;
         anio: string;
-        fecha_dj: string;
+        eliminado: boolean;
     }[]>;
     getAllPersonas(): Promise<{
         id: number;
@@ -25,15 +25,31 @@ export declare class PagosService {
         updatedAt: Date;
         activo: boolean;
         banco: string;
-        item: number;
         dni: string;
+        item: number;
         ruc: string;
         direccion: string;
         cci: string;
         colegio: string;
         anio: string;
-        fecha_dj: string;
+        eliminado: boolean;
     }[]>;
+    deletePersona(dni: string): Promise<{
+        id: number;
+        nombre: string;
+        createdAt: Date;
+        updatedAt: Date;
+        activo: boolean;
+        banco: string;
+        dni: string;
+        item: number;
+        ruc: string;
+        direccion: string;
+        cci: string;
+        colegio: string;
+        anio: string;
+        eliminado: boolean;
+    }>;
     private validateLengths;
     createPersona(data: any): Promise<{
         id: number;
@@ -42,14 +58,14 @@ export declare class PagosService {
         updatedAt: Date;
         activo: boolean;
         banco: string;
-        item: number;
         dni: string;
+        item: number;
         ruc: string;
         direccion: string;
         cci: string;
         colegio: string;
         anio: string;
-        fecha_dj: string;
+        eliminado: boolean;
     }>;
     togglePersonaStatus(dni: string, activo: boolean): Promise<{
         id: number;
@@ -58,14 +74,14 @@ export declare class PagosService {
         updatedAt: Date;
         activo: boolean;
         banco: string;
-        item: number;
         dni: string;
+        item: number;
         ruc: string;
         direccion: string;
         cci: string;
         colegio: string;
         anio: string;
-        fecha_dj: string;
+        eliminado: boolean;
     }>;
     updatePersona(dni: string, data: any): Promise<{
         id: number;
@@ -74,14 +90,14 @@ export declare class PagosService {
         updatedAt: Date;
         activo: boolean;
         banco: string;
-        item: number;
         dni: string;
+        item: number;
         ruc: string;
         direccion: string;
         cci: string;
         colegio: string;
         anio: string;
-        fecha_dj: string;
+        eliminado: boolean;
     }>;
     exportToExcel(): Promise<any>;
     generateDocuments(dnis: string[]): Promise<{

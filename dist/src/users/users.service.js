@@ -24,11 +24,14 @@ let UsersService = class UsersService {
     }
     async findAll() {
         return this.prisma.user.findMany({
-            select: { id: true, username: true, rol: true, activo: true, createdAt: true },
+            select: { id: true, username: true, rol: true, activo: true, createdAt: true, dni: true, nombre: true, apellido: true },
             orderBy: { id: 'asc' },
         });
     }
     async create(data) {
+        if (!/(?=.*[!@#$%^&*]).{4,}/.test(data.password)) {
+            throw new Error('La contraseña debe tener al menos 4 caracteres y un carácter especial (!@#$%^&*)');
+        }
         const exists = await this.prisma.user.findUnique({ where: { username: data.username } });
         if (exists) {
             throw new Error('El nombre de usuario ya está en uso');
@@ -38,6 +41,9 @@ let UsersService = class UsersService {
                 username: data.username,
                 password: data.password,
                 rol: data.rol || 'USER',
+                dni: data.dni || '',
+                nombre: data.nombre || '',
+                apellido: data.apellido || '',
             },
         });
     }
@@ -45,6 +51,29 @@ let UsersService = class UsersService {
         return this.prisma.user.update({
             where: { id },
             data: { activo },
+        });
+    }
+    async update(id, data) {
+        const updateData = {
+            username: data.username,
+            rol: data.rol,
+            dni: data.dni,
+            nombre: data.nombre,
+            apellido: data.apellido,
+        };
+        if (data.password && data.password.trim() !== '') {
+            if (!/(?=.*[!@#$%^&*]).{4,}/.test(data.password)) {
+                throw new Error('La contraseña debe tener al menos 4 caracteres y un carácter especial (!@#$%^&*)');
+            }
+            updateData.password = data.password;
+        }
+        const exists = await this.prisma.user.findUnique({ where: { username: data.username } });
+        if (exists && exists.id !== id) {
+            throw new Error('El nombre de usuario ya está en uso por otra persona');
+        }
+        return this.prisma.user.update({
+            where: { id },
+            data: updateData,
         });
     }
 };

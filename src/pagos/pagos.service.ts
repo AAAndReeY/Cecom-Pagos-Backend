@@ -60,8 +60,8 @@ export class PagosService {
       if (ruc && ruc !== '' && !/^\d{11}$/.test(ruc)) {
         throw new BadRequestException(`Fila con Nombre "${nombre}" rechazada: El RUC debe tener exactamente 11 números (encontrado: ${ruc}).`);
       }
-      if (cci && cci !== '' && !/^\d{20}$/.test(cci)) {
-        throw new BadRequestException(`Fila con Nombre "${nombre}" rechazada: El CCI debe tener exactamente 20 números (encontrado: ${cci}).`);
+      if (cci && cci !== '' && cci.toUpperCase() !== 'SIN REGISTRO' && !/^\d{20}$/.test(cci)) {
+        throw new BadRequestException(`Fila con Nombre "${nombre}" rechazada: El CCI debe tener exactamente 20 números o decir 'SIN REGISTRO' (encontrado: ${cci}).`);
       }
 
       const personaExistente = await this.prisma.persona.findUnique({ where: { dni: dniClean } });

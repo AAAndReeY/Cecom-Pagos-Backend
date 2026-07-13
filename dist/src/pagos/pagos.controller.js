@@ -43,6 +43,9 @@ let PagosController = class PagosController {
     async updatePersona(dni, data) {
         return this.pagosService.updatePersona(dni, data);
     }
+    async deletePersona(dni) {
+        return this.pagosService.deletePersona(dni);
+    }
     async exportarExcel(res) {
         const buffer = await this.pagosService.exportToExcel();
         res.set({
@@ -115,6 +118,13 @@ __decorate([
     __metadata("design:paramtypes", [String, update_persona_dto_1.UpdatePersonaDto]),
     __metadata("design:returntype", Promise)
 ], PagosController.prototype, "updatePersona", null);
+__decorate([
+    (0, common_1.Delete)('persona/:dni'),
+    __param(0, (0, common_1.Param)('dni')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], PagosController.prototype, "deletePersona", null);
 __decorate([
     (0, common_1.Get)('exportar'),
     __param(0, (0, common_1.Res)()),

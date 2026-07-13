@@ -80,7 +80,7 @@ let PagosService = class PagosService {
                 return match ? row[match] : null;
             };
             const item = row['ITEM'];
-            const nombre = row['NOMBRE'];
+            const nombre = getVal('NOMBRE');
             const dni = getVal('DNI')?.toString();
             const ruc = getVal('RUC')?.toString().trim();
             const direccion = getVal('DIRECCI') || getVal('DOMICILIO');
@@ -88,9 +88,11 @@ let PagosService = class PagosService {
             const cci = (getVal('CCI', true) || getVal('NCCI', true))?.toString().trim();
             const colegio = getVal('COLEGIO');
             const anio = getVal('AO') || getVal('ANIO') || getVal('AÑO');
-            const fecha_dj = getVal('FECHA');
             if (!dni)
                 continue;
+            if (!nombre) {
+                throw new common_1.BadRequestException(`Fila rechazada: No se encontró el nombre para el DNI ${dni}. Asegúrese de que la columna se llame 'NOMBRE' o similar.`);
+            }
             const dniClean = dni.trim();
             if (!/^\d{8}$/.test(dniClean)) {
                 throw new common_1.BadRequestException(`Fila con Nombre "${nombre}" rechazada: El DNI debe tener exactamente 8 números (encontrado: ${dniClean}).`);
@@ -122,7 +124,6 @@ let PagosService = class PagosService {
                     cci,
                     colegio,
                     anio: anio?.toString(),
-                    fecha_dj,
                 },
                 create: {
                     item: finalItem,
@@ -134,7 +135,6 @@ let PagosService = class PagosService {
                     cci,
                     colegio,
                     anio: anio?.toString(),
-                    fecha_dj,
                 },
             });
             results.push(persona);
@@ -143,7 +143,14 @@ let PagosService = class PagosService {
     }
     async getAllPersonas() {
         return this.prisma.persona.findMany({
+            where: { eliminado: false },
             orderBy: { item: 'asc' },
+        });
+    }
+    async deletePersona(dni) {
+        return this.prisma.persona.update({
+            where: { dni },
+            data: { eliminado: true },
         });
     }
     validateLengths(data) {
@@ -209,7 +216,6 @@ let PagosService = class PagosService {
             CCI: p.cci || '',
             COLEGIO: p.colegio || '',
             AÑO: p.anio || '',
-            FECHA_DJ: p.fecha_dj || '',
             ESTADO: p.activo ? 'Habilitado' : 'Deshabilitado',
         }));
         const worksheet = xlsx.utils.json_to_sheet(data);
@@ -254,6 +260,11 @@ let PagosService = class PagosService {
         for (let i = 0; i < 20; i++) {
             cciObj[`c${i}`] = cciStr[i] || '';
         }
+        const meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+        const now = new Date();
+        const currentMonth = meses[now.getMonth()];
+        const currentYear = now.getFullYear();
+        const fechaDynamic = `San Juan de Lurigancho, ${currentMonth} ${currentYear}`;
         doc.render({
             NOMBRE: persona.nombre || '',
             DNI: persona.dni || '',
@@ -264,7 +275,8 @@ let PagosService = class PagosService {
             ...cciObj,
             COLEGIO: persona.colegio || '',
             ANIO: persona.anio || '',
-            FECHA_DJ: persona.fecha_dj || '',
+            MES_ACTUAL: currentMonth,
+            ANIO_ACTUAL: currentYear.toString(),
         });
         const buf = doc.getZip().generate({
             type: 'nodebuffer',

@@ -19,14 +19,14 @@ export declare class PagosController {
         updatedAt: Date;
         activo: boolean;
         banco: string;
-        item: number;
         dni: string;
+        item: number;
         ruc: string;
         direccion: string;
         cci: string;
         colegio: string;
         anio: string;
-        fecha_dj: string;
+        eliminado: boolean;
     }[]>;
     createPersona(data: CreatePersonaDto): Promise<{
         id: number;
@@ -35,14 +35,14 @@ export declare class PagosController {
         updatedAt: Date;
         activo: boolean;
         banco: string;
-        item: number;
         dni: string;
+        item: number;
         ruc: string;
         direccion: string;
         cci: string;
         colegio: string;
         anio: string;
-        fecha_dj: string;
+        eliminado: boolean;
     }>;
     toggleStatus(dni: string, activo: boolean): Promise<{
         id: number;
@@ -51,14 +51,14 @@ export declare class PagosController {
         updatedAt: Date;
         activo: boolean;
         banco: string;
-        item: number;
         dni: string;
+        item: number;
         ruc: string;
         direccion: string;
         cci: string;
         colegio: string;
         anio: string;
-        fecha_dj: string;
+        eliminado: boolean;
     }>;
     updatePersona(dni: string, data: UpdatePersonaDto): Promise<{
         id: number;
@@ -67,14 +67,30 @@ export declare class PagosController {
         updatedAt: Date;
         activo: boolean;
         banco: string;
-        item: number;
         dni: string;
+        item: number;
         ruc: string;
         direccion: string;
         cci: string;
         colegio: string;
         anio: string;
-        fecha_dj: string;
+        eliminado: boolean;
+    }>;
+    deletePersona(dni: string): Promise<{
+        id: number;
+        nombre: string;
+        createdAt: Date;
+        updatedAt: Date;
+        activo: boolean;
+        banco: string;
+        dni: string;
+        item: number;
+        ruc: string;
+        direccion: string;
+        cci: string;
+        colegio: string;
+        anio: string;
+        eliminado: boolean;
     }>;
     exportarExcel(res: Response): Promise<void>;
     generateDocs(body: {
