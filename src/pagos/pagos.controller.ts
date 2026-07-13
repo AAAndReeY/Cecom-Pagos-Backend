@@ -30,7 +30,7 @@ export class PagosController {
   ) {
     return this.pagosService.getPersonasPaginated({
       page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 50,
+      limit: limit ? parseInt(limit, 10) : 20,
       search,
       sinRegistro: sinRegistro === 'true',
     });
