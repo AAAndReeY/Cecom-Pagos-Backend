@@ -31,8 +31,13 @@ let PagosController = class PagosController {
         const results = await this.pagosService.processExcel(file.buffer);
         return { message: 'Archivo procesado con éxito', count: results.length };
     }
-    async getPersonas() {
-        return this.pagosService.getAllPersonas();
+    async getPersonas(page, limit, search, sinRegistro) {
+        return this.pagosService.getPersonasPaginated({
+            page: page ? parseInt(page, 10) : 1,
+            limit: limit ? parseInt(limit, 10) : 50,
+            search,
+            sinRegistro: sinRegistro === 'true',
+        });
     }
     async createPersona(data) {
         return this.pagosService.createPersona(data);
@@ -91,8 +96,12 @@ __decorate([
 ], PagosController.prototype, "uploadExcel", null);
 __decorate([
     (0, common_1.Get)('personas'),
+    __param(0, (0, common_1.Query)('page')),
+    __param(1, (0, common_1.Query)('limit')),
+    __param(2, (0, common_1.Query)('search')),
+    __param(3, (0, common_1.Query)('sinRegistro')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], PagosController.prototype, "getPersonas", null);
 __decorate([

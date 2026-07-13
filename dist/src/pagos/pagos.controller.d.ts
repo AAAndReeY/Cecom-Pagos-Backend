@@ -12,22 +12,27 @@ export declare class PagosController {
         message: string;
         count: number;
     }>;
-    getPersonas(): Promise<{
-        id: number;
-        nombre: string;
-        createdAt: Date;
-        updatedAt: Date;
-        activo: boolean;
-        banco: string;
-        dni: string;
-        item: number;
-        ruc: string;
-        direccion: string;
-        cci: string;
-        colegio: string;
-        anio: string;
-        eliminado: boolean;
-    }[]>;
+    getPersonas(page?: string, limit?: string, search?: string, sinRegistro?: string): Promise<{
+        data: {
+            id: number;
+            nombre: string;
+            createdAt: Date;
+            updatedAt: Date;
+            activo: boolean;
+            banco: string;
+            dni: string;
+            item: number;
+            ruc: string;
+            direccion: string;
+            cci: string;
+            colegio: string;
+            anio: string;
+            eliminado: boolean;
+        }[];
+        total: number;
+        page: number;
+        totalPages: number;
+    }>;
     createPersona(data: CreatePersonaDto): Promise<{
         id: number;
         nombre: string;

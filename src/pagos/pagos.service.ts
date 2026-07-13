@@ -113,6 +113,54 @@ export class PagosService {
     });
   }
 
+  async getPersonasPaginated(params: { page: number; limit: number; search?: string; sinRegistro?: boolean }) {
+    const { page, limit, search, sinRegistro } = params;
+    const skip = (page - 1) * limit;
+
+    let whereCondition: any = { eliminado: false };
+
+    if (sinRegistro) {
+      whereCondition = {
+        ...whereCondition,
+        OR: [
+          { nombre: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+          { dni: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+          { ruc: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+          { direccion: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+          { banco: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+          { cci: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+          { colegio: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+          { anio: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+        ]
+      };
+    } else if (search) {
+      whereCondition = {
+        ...whereCondition,
+        OR: [
+          { nombre: { contains: search, mode: 'insensitive' } },
+          { dni: { contains: search, mode: 'insensitive' } },
+        ]
+      };
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.persona.findMany({
+        where: whereCondition,
+        skip,
+        take: limit,
+        orderBy: { item: 'asc' },
+      }),
+      this.prisma.persona.count({ where: whereCondition }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
   async deletePersona(dni: string) {
     return this.prisma.persona.update({
       where: { dni },

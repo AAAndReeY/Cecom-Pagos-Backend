@@ -80,28 +80,28 @@ let PagosService = class PagosService {
                 return match ? row[match] : null;
             };
             const item = row['ITEM'];
-            const nombre = getVal('NOMBRE');
-            const dni = getVal('DNI')?.toString();
-            const ruc = getVal('RUC')?.toString().trim();
-            const direccion = getVal('DIRECCI') || getVal('DOMICILIO');
-            const banco = getVal('BANCO');
-            const cci = (getVal('CCI', true) || getVal('NCCI', true))?.toString().trim();
-            const colegio = getVal('COLEGIO');
-            const anio = getVal('AO') || getVal('ANIO') || getVal('AÑO');
-            if (!dni)
-                continue;
-            if (!nombre) {
-                throw new common_1.BadRequestException(`Fila rechazada: No se encontró el nombre para el DNI ${dni}. Asegúrese de que la columna se llame 'NOMBRE' o similar.`);
+            const uniqueSuffix = `-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+            const nombre = getVal('NOMBRE') || 'SIN REGISTRO';
+            const dniRaw = getVal('DNI')?.toString().trim();
+            const dni = dniRaw || `SIN REGISTRO${uniqueSuffix}`;
+            let ruc = getVal('RUC')?.toString().trim() || `SIN REGISTRO${uniqueSuffix}`;
+            if (ruc.toUpperCase() === 'SIN REGISTRO') {
+                ruc = `SIN REGISTRO${uniqueSuffix}`;
             }
-            const dniClean = dni.trim();
-            if (!/^\d{8}$/.test(dniClean)) {
-                throw new common_1.BadRequestException(`Fila con Nombre "${nombre}" rechazada: El DNI debe tener exactamente 8 números (encontrado: ${dniClean}).`);
+            const direccion = getVal('DIRECCI') || getVal('DOMICILIO') || 'SIN REGISTRO';
+            const banco = getVal('BANCO') || 'SIN REGISTRO';
+            const cci = (getVal('CCI', true) || getVal('NCCI', true))?.toString().trim() || 'SIN REGISTRO';
+            const colegio = getVal('COLEGIO') || 'SIN REGISTRO';
+            const anio = getVal('AO') || getVal('ANIO') || getVal('AÑO') || 'SIN REGISTRO';
+            const dniClean = dni;
+            if (!dniClean.startsWith('SIN REGISTRO') && !/^\d{8}$/.test(dniClean)) {
+                throw new common_1.BadRequestException(`ERROR EN EL EXCEL: En la fila del trabajador "${nombre}", la celda del DNI tiene un formato incorrecto. Debe tener exactamente 8 números o dejarla vacía (actualmente tiene: "${dniClean}"). Corrija el Excel y vuelva a intentarlo.`);
             }
-            if (ruc && ruc !== '' && !/^\d{11}$/.test(ruc)) {
-                throw new common_1.BadRequestException(`Fila con Nombre "${nombre}" rechazada: El RUC debe tener exactamente 11 números (encontrado: ${ruc}).`);
+            if (!ruc.startsWith('SIN REGISTRO') && !/^\d{11}$/.test(ruc)) {
+                throw new common_1.BadRequestException(`ERROR EN EL EXCEL: En la fila del DNI ${dniClean}, la celda del RUC tiene un formato incorrecto. Debe tener exactamente 11 números o dejarla vacía (actualmente tiene: "${ruc}"). Corrija el Excel y vuelva a intentarlo.`);
             }
-            if (cci && cci !== '' && !/^\d{20}$/.test(cci)) {
-                throw new common_1.BadRequestException(`Fila con Nombre "${nombre}" rechazada: El CCI debe tener exactamente 20 números (encontrado: ${cci}).`);
+            if (cci.toUpperCase() !== 'SIN REGISTRO' && !/^\d{20}$/.test(cci)) {
+                throw new common_1.BadRequestException(`ERROR EN EL EXCEL: En la fila del DNI ${dniClean}, la celda del CCI tiene un formato incorrecto. Debe tener exactamente 20 números o dejarla vacía (actualmente tiene: "${cci}"). Corrija el Excel y vuelva a intentarlo.`);
             }
             const personaExistente = await this.prisma.persona.findUnique({ where: { dni: dniClean } });
             let finalItem = item;
@@ -146,6 +146,50 @@ let PagosService = class PagosService {
             where: { eliminado: false },
             orderBy: { item: 'asc' },
         });
+    }
+    async getPersonasPaginated(params) {
+        const { page, limit, search, sinRegistro } = params;
+        const skip = (page - 1) * limit;
+        let whereCondition = { eliminado: false };
+        if (sinRegistro) {
+            whereCondition = {
+                ...whereCondition,
+                OR: [
+                    { nombre: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+                    { dni: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+                    { ruc: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+                    { direccion: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+                    { banco: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+                    { cci: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+                    { colegio: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+                    { anio: { contains: 'SIN REGISTRO', mode: 'insensitive' } },
+                ]
+            };
+        }
+        else if (search) {
+            whereCondition = {
+                ...whereCondition,
+                OR: [
+                    { nombre: { contains: search, mode: 'insensitive' } },
+                    { dni: { contains: search, mode: 'insensitive' } },
+                ]
+            };
+        }
+        const [data, total] = await Promise.all([
+            this.prisma.persona.findMany({
+                where: whereCondition,
+                skip,
+                take: limit,
+                orderBy: { item: 'asc' },
+            }),
+            this.prisma.persona.count({ where: whereCondition }),
+        ]);
+        return {
+            data,
+            total,
+            page,
+            totalPages: Math.ceil(total / limit),
+        };
     }
     async deletePersona(dni) {
         return this.prisma.persona.update({
@@ -206,11 +250,12 @@ let PagosService = class PagosService {
     }
     async exportToExcel() {
         const personas = await this.getAllPersonas();
+        const cleanValue = (val) => val.startsWith('SIN REGISTRO') ? 'SIN REGISTRO' : val;
         const data = personas.map((p) => ({
             ITEM: p.item,
             NOMBRE: p.nombre,
-            DNI: p.dni,
-            RUC: p.ruc || '',
+            DNI: cleanValue(p.dni),
+            RUC: cleanValue(p.ruc || ''),
             DIRECCION: p.direccion || '',
             BANCO: p.banco || '',
             CCI: p.cci || '',
@@ -265,10 +310,11 @@ let PagosService = class PagosService {
         const currentMonth = meses[now.getMonth()];
         const currentYear = now.getFullYear();
         const fechaDynamic = `San Juan de Lurigancho, ${currentMonth} ${currentYear}`;
+        const cleanValue = (val) => val.startsWith('SIN REGISTRO') ? 'SIN REGISTRO' : val;
         doc.render({
             NOMBRE: persona.nombre || '',
-            DNI: persona.dni || '',
-            RUC: persona.ruc || '',
+            DNI: cleanValue(persona.dni || ''),
+            RUC: cleanValue(persona.ruc || ''),
             DIRECCION: persona.direccion || '',
             BANCO: persona.banco || '',
             CCI: cciStr,

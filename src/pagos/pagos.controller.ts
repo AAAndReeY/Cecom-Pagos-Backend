@@ -1,4 +1,4 @@
-import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, Get, Body, Res, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, Get, Body, Res, Patch, Param, Delete, Query } from '@nestjs/common';
 import { PagosService } from './pagos.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../auth/auth.guard';
@@ -22,8 +22,18 @@ export class PagosController {
   }
 
   @Get('personas')
-  async getPersonas() {
-    return this.pagosService.getAllPersonas();
+  async getPersonas(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('sinRegistro') sinRegistro?: string,
+  ) {
+    return this.pagosService.getPersonasPaginated({
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 50,
+      search,
+      sinRegistro: sinRegistro === 'true',
+    });
   }
 
   @Post('persona')

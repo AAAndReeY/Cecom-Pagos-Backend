@@ -34,6 +34,32 @@ export declare class PagosService {
         anio: string;
         eliminado: boolean;
     }[]>;
+    getPersonasPaginated(params: {
+        page: number;
+        limit: number;
+        search?: string;
+        sinRegistro?: boolean;
+    }): Promise<{
+        data: {
+            id: number;
+            nombre: string;
+            createdAt: Date;
+            updatedAt: Date;
+            activo: boolean;
+            banco: string;
+            dni: string;
+            item: number;
+            ruc: string;
+            direccion: string;
+            cci: string;
+            colegio: string;
+            anio: string;
+            eliminado: boolean;
+        }[];
+        total: number;
+        page: number;
+        totalPages: number;
+    }>;
     deletePersona(dni: string): Promise<{
         id: number;
         nombre: string;
