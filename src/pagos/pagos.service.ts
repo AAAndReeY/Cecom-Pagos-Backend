@@ -37,24 +37,29 @@ export class PagosService {
       };
 
       const item = row['ITEM'];
+      const uniqueSuffix = `-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
       const nombre = getVal('NOMBRE') || 'SIN REGISTRO';
-      const dni = getVal('DNI')?.toString();
-      const ruc = getVal('RUC')?.toString().trim() || 'SIN REGISTRO';
+      const dniRaw = getVal('DNI')?.toString().trim();
+      const dni = dniRaw || `SIN REGISTRO${uniqueSuffix}`;
+      let ruc = getVal('RUC')?.toString().trim() || `SIN REGISTRO${uniqueSuffix}`;
+      
+      if (ruc.toUpperCase() === 'SIN REGISTRO') {
+        ruc = `SIN REGISTRO${uniqueSuffix}`;
+      }
+      
       const direccion = getVal('DIRECCI') || getVal('DOMICILIO') || 'SIN REGISTRO';
       const banco = getVal('BANCO') || 'SIN REGISTRO';
       const cci = (getVal('CCI', true) || getVal('NCCI', true))?.toString().trim() || 'SIN REGISTRO';
       const colegio = getVal('COLEGIO') || 'SIN REGISTRO';
       const anio = getVal('AO') || getVal('ANIO') || getVal('AÑO') || 'SIN REGISTRO';
-
-      if (!dni) continue;
       
-      const dniClean = dni.trim();
+      const dniClean = dni;
 
-      if (!/^\d{8}$/.test(dniClean)) {
-        throw new BadRequestException(`ERROR EN EL EXCEL: En la fila del trabajador "${nombre}", la celda del DNI tiene un formato incorrecto. Debe tener exactamente 8 números (actualmente tiene: "${dniClean}"). Corrija el Excel y vuelva a intentarlo.`);
+      if (!dniClean.startsWith('SIN REGISTRO') && !/^\d{8}$/.test(dniClean)) {
+        throw new BadRequestException(`ERROR EN EL EXCEL: En la fila del trabajador "${nombre}", la celda del DNI tiene un formato incorrecto. Debe tener exactamente 8 números o dejarla vacía (actualmente tiene: "${dniClean}"). Corrija el Excel y vuelva a intentarlo.`);
       }
       
-      if (ruc.toUpperCase() !== 'SIN REGISTRO' && !/^\d{11}$/.test(ruc)) {
+      if (!finalRuc.startsWith('SIN REGISTRO') && !/^\d{11}$/.test(finalRuc)) {
         throw new BadRequestException(`ERROR EN EL EXCEL: En la fila del DNI ${dniClean}, la celda del RUC tiene un formato incorrecto. Debe tener exactamente 11 números o dejarla vacía (actualmente tiene: "${ruc}"). Corrija el Excel y vuelva a intentarlo.`);
       }
       
@@ -168,11 +173,12 @@ export class PagosService {
 
   async exportToExcel() {
     const personas = await this.getAllPersonas();
+    const cleanValue = (val: string) => val.startsWith('SIN REGISTRO') ? 'SIN REGISTRO' : val;
     const data = personas.map((p: any) => ({
       ITEM: p.item,
       NOMBRE: p.nombre,
-      DNI: p.dni,
-      RUC: p.ruc || '',
+      DNI: cleanValue(p.dni),
+      RUC: cleanValue(p.ruc || ''),
       DIRECCION: p.direccion || '',
       BANCO: p.banco || '',
       CCI: p.cci || '',
@@ -236,10 +242,12 @@ export class PagosService {
     const currentYear = now.getFullYear();
     const fechaDynamic = `San Juan de Lurigancho, ${currentMonth} ${currentYear}`;
 
+    const cleanValue = (val: string) => val.startsWith('SIN REGISTRO') ? 'SIN REGISTRO' : val;
+
     doc.render({
       NOMBRE: persona.nombre || '',
-      DNI: persona.dni || '',
-      RUC: persona.ruc || '',
+      DNI: cleanValue(persona.dni || ''),
+      RUC: cleanValue(persona.ruc || ''),
       DIRECCION: persona.direccion || '',
       BANCO: persona.banco || '',
       CCI: cciStr, 
