@@ -35,7 +35,4 @@ export class CreatePersonaDto {
   @IsNotEmpty({ message: 'El año es obligatorio' })
   anio: string;
 
-  @IsString({ message: 'La fecha de la DJ debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'La fecha de la DJ es obligatoria' })
-  fecha_dj: string;
 }

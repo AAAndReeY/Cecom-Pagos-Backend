@@ -35,7 +35,4 @@ export class UpdatePersonaDto {
   @IsOptional()
   anio?: string;
 
-  @IsString()
-  @IsOptional()
-  fecha_dj?: string;
 }
